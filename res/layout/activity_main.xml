@@ -1,0 +1,148 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity" >
+
+    <!-- 日志文件：开始，结束，删除 -->
+
+    <Button
+        android:id="@+id/start_log"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:onClick="onStartLog"
+        android:text="开始" />
+
+    <Button
+        android:id="@+id/end_log"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="5dp"
+        android:layout_toRightOf="@id/start_log"
+        android:onClick="onEndLog"
+        android:text="结束" />
+
+    <Button
+        android:id="@+id/del_log"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="5dp"
+        android:layout_toRightOf="@id/end_log"
+        android:onClick="onDelLog"
+        android:text="删除" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/del_log"
+        android:text="日志文件"
+        android:textSize="20sp" />
+
+    <!-- 监控(Monitoring)特定区域(Region)的beacons的进入，离开和临界 -->
+
+    <Button
+        android:id="@+id/Mstart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/start_log"
+        android:layout_below="@id/start_log"
+        android:onClick="onMonitoringStart"
+        android:text="Mstart" />
+
+    <Button
+        android:id="@+id/Mstop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/end_log"
+        android:layout_toRightOf="@id/Mstart"
+        android:onClick="onMonitoringStop"
+        android:text="Mstop" />
+    
+     <!-- 定位参考点名称  -->
+     <EditText
+        android:id="@+id/RPname"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/Mstop"
+        android:layout_toRightOf="@+id/Mstop"
+        android:text="rp1"
+        android:ems="10"
+        android:textSize="20sp" />
+
+    <!-- 设置前台扫描周期 -->
+    <EditText
+        android:id="@+id/ScanPeriod_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/Mstart"
+        android:layout_alignRight="@id/Mstop"
+        android:layout_below="@id/Mstart"
+        android:ems="10"
+        android:hint="扫描周期(s)"
+        android:inputType="numberDecimal" />
+   
+    <!-- 在每次开始监控(查找)beacons时设置，因此不用此函数设置 -->
+    <!--  android:onClick="onForegroundScanPeriod" -->
+    <Button
+        android:id="@+id/ForegroundScanPeriod_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/ScanPeriod_edit"
+        android:layout_toRightOf="@+id/ScanPeriod_edit"
+        android:enabled="false"
+        android:text="前台扫描周期(s)" />
+    
+   
+    <!-- 设置rssi采样周期，即，计算该时间段内的平均RSSI（首末各去掉10%）-->
+    <EditText
+        android:id="@+id/SamplePeriod_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/Mstart"
+        android:layout_alignRight="@id/Mstop"
+        android:layout_below="@id/ScanPeriod_edit"
+        android:ems="10"
+        android:hint="rssi采样周期(s)"
+        android:inputType="numberDecimal" />
+
+    <!-- 在每次开始监控(查找)beacons时设置，因此不用此函数设置 -->
+    <!-- android:onClick="onSamplePeriod" -->
+    <Button
+        android:id="@+id/SamplePeriod_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/SamplePeriod_edit"
+        android:layout_toRightOf="@+id/SamplePeriod_edit"
+        android:enabled="false"
+        android:text="采样周期(s)" />
+       
+    <!-- 提示信息 -->   
+    <ScrollView
+        android:id="@+id/scrollView" 
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content" 
+        android:scrollbars="vertical"
+        android:fadeScrollbars="true"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/SamplePeriod_edit" > 
+        <TextView
+	        android:id="@+id/monitoringText"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:isScrollContainer="true"      
+	        android:ems="10"
+	        android:gravity="left|bottom"
+	        android:text="提示信息" />
+     </ScrollView>
+    
+</RelativeLayout>

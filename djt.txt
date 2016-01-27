@@ -1,0 +1,7 @@
+project.properties文件添加：（可以通过选取atlbeacon_libray_master工程目录，右键点击properties设置）
+   #引入atlbeacon_libray_master库
+   android.library.reference.1=../atlbeacon_libray_master
+   
+   # merges the resources of a library project --- "org.altbeacon.beacon"
+   # 合并库的注册文件
+   manifestmerger.enabled=true
