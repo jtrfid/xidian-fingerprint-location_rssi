@@ -14,6 +14,7 @@ import org.altbeacon.beacon.logging.Loggers;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -27,7 +28,8 @@ import edu.xidian.FindBeacons.RssiInfo;
 import edu.xidian.logtofile.LogcatHelper;
 
 /**
- * 实现指纹算法第二阶段，即，在线定位阶段。在线测得各个beacon的rssi值，与第一阶段存入数据库的各个定位参考点的各beacons的rssi值比对，获得最近的定位参考点。
+ * 指纹定位与rssi距离定位比较
+ * 指纹算法第二阶段，即，在线定位阶段。在线测得各个beacon的rssi值，与第一阶段存入数据库的各个定位参考点的各beacons的rssi值比对，获得最近的定位参考点。
  * 数据库管理：edu.xidian.FindBeacons.RssiDbManager，数据库文件：sdcard/rssiRecord/rssi.db
  */
 public class locationActivity extends Activity {
@@ -46,53 +48,85 @@ public class locationActivity extends Activity {
 			
 			if(beacons.size() == 0) return;
 			
-			// 定位参考点名称
-			String RPname;
-			/**
-			 * key: beacon的major,minor组成的字符串major_minor;
-			 * value: rssi平均值
-			 */
-			Map<String,Double> RSSIs = new HashMap<String,Double>();
-			
-			Double diff_sum = 0.0;
-			Double min_value = 0.0;
-			String min_RPname = null;
-			for(RssiInfo rssi_info : mRssiInfo) { // RP,遍历每个定位参考点
-				diff_sum = 0.0; 
-				RPname = rssi_info.getRPname();
-				RSSIs = rssi_info.getRSSIs();
-				for (Beacon beacon : beacons) { // 遍历本次扫描周期测到的各个beacon
-					// becaon的两个id(major,minor)，rssi及其平均值
-					String key = beacon.getId2()+"_"+beacon.getId3();
-					Double rssi = beacon.getRunningAverageRssi();
-					Double rssi_db = RSSIs.get(key);
-					//logToDisplay("key="+key+",rssi="+rssi+",rssi_db="+rssi_db);
-                    if (rssi_db != null) 
-						diff_sum = diff_sum + (rssi-rssi_db)*(rssi-rssi_db)/beacons.size();
-					else {
-						str = "数据库中无key="+key;
-						LogManager.d(TAG, str);
-						logToDisplay(str);
-					}
-				}  // RSSIs
-				if (min_value == 0.0) {
-					min_value = diff_sum;
-					min_RPname = RPname;
-				}
-				else if(min_value > diff_sum) {
-					min_value = diff_sum;
-					min_RPname = RPname;
-				}
-				str = "参考点["+ RPname + "]rssi单位平方差="+ diff_sum;
-				LogManager.d(TAG, str);
-			    logToDisplay(str);    
-			} // for RP
-			str = "最近参考点："+min_RPname;
-			LogManager.d(TAG, str);
-		    logToDisplay(str);
+			/** 根据指纹定位算法定位  */
+		    fingerprint(beacons);
+		    /** 根据rssi距离模型定位  */
+		    rssi_distance(beacons);
 		}
     	
     }; 
+    
+    /** 根据指纹定位算法定位  */
+    private void fingerprint(Collection<Beacon> beacons)
+    {
+		String str;
+    	// 定位参考点名称
+		String RPname;
+		/**
+		 * key: beacon的major,minor组成的字符串major_minor;
+		 * value: rssi平均值
+		 */
+		Map<String,Double> RSSIs = new HashMap<String,Double>();
+		
+		Double diff_sum = 0.0;
+		Double min_value = 0.0;
+		String min_RPname = null;
+		for(RssiInfo rssi_info : mRssiInfo) { // RP,遍历每个定位参考点
+			diff_sum = 0.0; 
+			RPname = rssi_info.getRPname();
+			RSSIs = rssi_info.getRSSIs();
+			for (Beacon beacon : beacons) { // 遍历本次扫描周期测到的各个beacon
+				// becaon的两个id(major,minor)，rssi及其平均值
+				String key = beacon.getId2()+"_"+beacon.getId3();
+				Double rssi = beacon.getRunningAverageRssi();
+				Double rssi_db = RSSIs.get(key);
+				//logToDisplay("key="+key+",rssi="+rssi+",rssi_db="+rssi_db);
+                if (rssi_db != null) 
+					diff_sum = diff_sum + (rssi-rssi_db)*(rssi-rssi_db)/beacons.size();
+				else {
+					str = "数据库中无key="+key;
+					LogManager.d(TAG, str);
+					logToDisplay(str);
+				}
+			}  // RSSIs
+			if (min_value == 0.0) {
+				min_value = diff_sum;
+				min_RPname = RPname;
+			}
+			else if(min_value > diff_sum) {
+				min_value = diff_sum;
+				min_RPname = RPname;
+			}
+			//str = "参考点["+ RPname + "]rssi单位平方差="+ String.format("%.2f",diff_sum);
+			//LogManager.d(TAG, str);
+		    //logToDisplay(str);    
+		} // for RP
+		str = "最近参考点："+min_RPname;
+		LogManager.d(TAG, str);
+	    logToDisplay(str);
+    }
+    
+    /** 根据rssi距离模型定位  */
+    private void rssi_distance(Collection<Beacon> beacons)
+    {
+		String str;  	
+		double min_distance = 100.0; // 最近beacon的距离
+		double d;
+		String min_Ids = null; // 最近becaon的两个id(major,minor)组成的字符串
+		for (Beacon beacon : beacons) { // 遍历本次扫描周期测到的各个beacon
+			d = beacon.getDistance();
+			if (d < min_distance) { 
+			   min_Ids = beacon.getId2()+"_"+beacon.getId3();
+			   min_distance = d;
+			}
+			//str = "beacon["+ beacon.getId2()+"_"+beacon.getId3() + "]距离="+ String.format("%.2f",d);
+			//LogManager.d(TAG, str);
+		    //logToDisplay(str);    
+		} 
+		str = "最近beacon："+min_Ids+","+String.format("%.2f",min_distance);
+		LogManager.d(TAG, str);
+	    logToDisplay(str);
+    }
        
     private static LogcatHelper loghelper;  //日志文件
     private Button start_logfile; // 开始记录日志文件
@@ -112,6 +146,9 @@ public class locationActivity extends Activity {
     
     /** 数据库中存储的各个定位参考点的beacons的rssi平均值 */
     List<RssiInfo> mRssiInfo;
+    
+    /** 写标记到日志 */
+    private EditText mark_edit;
         
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -186,6 +223,9 @@ public class locationActivity extends Activity {
         SamplePeriod_edit = (EditText)findViewById(R.id.SamplePeriod_edit);
         SamplePeriod_edit.setText("10");  // 10s
         onSamplePeriod(null);
+        
+        /** 写标记到日志 */
+        mark_edit = (EditText)findViewById(R.id.Mark_edt);
                 
         // 数据库管理, 获取数据库中存储的各个定位参考点的beacons的rssi平均值
         mRssiDbManager = new RssiDbManager(locationActivity.this);
@@ -288,6 +328,13 @@ public class locationActivity extends Activity {
     	String period_str = SamplePeriod_edit.getText().toString();
     	int SamplePeroid = (int)(Double.parseDouble(period_str) * 1000.0D);
         FindBeacons.setSampleExpirationMilliseconds(SamplePeroid);   
+    }
+    
+    /** 写标记到日志 */
+    public void onMark(View view) {
+    	String str = "***" + mark_edit.getText().toString() + "***";
+    	LogManager.d(TAG, str);
+    	logToDisplay(str);
     }
      
     public void logToDisplay(final String line) {

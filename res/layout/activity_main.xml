@@ -68,16 +68,25 @@
         android:onClick="onMonitoringStop"
         android:text="Mstop" />
     
-     <!-- 定位参考点名称  -->
+     <!-- 定位参考点名称,标记名称，用于记录日志  -->
      <EditText
-        android:id="@+id/RPname"
+        android:id="@+id/Mark_edt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/Mstop"
         android:layout_toRightOf="@+id/Mstop"
         android:text="rp1"
-        android:ems="10"
+        android:ems="4"
         android:textSize="20sp" />
+    <!-- 把标记名称记录到日志文件  -->
+    <Button
+        android:id="@+id/Mark_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/end_log"
+        android:layout_toRightOf="@id/Mark_edt"
+        android:onClick="onMark"
+        android:text="Mark" />
 
     <!-- 设置前台扫描周期 -->
     <EditText
