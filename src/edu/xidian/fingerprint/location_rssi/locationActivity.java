@@ -14,7 +14,6 @@ import org.altbeacon.beacon.logging.Loggers;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,7 +24,9 @@ import edu.xidian.FindBeacons.FindBeacons;
 import edu.xidian.FindBeacons.FindBeacons.OnBeaconsListener;
 import edu.xidian.FindBeacons.RssiDbManager;
 import edu.xidian.FindBeacons.RssiInfo;
+import edu.xidian.NearestBeacon.NearestBeacon;
 import edu.xidian.logtofile.LogcatHelper;
+import edu.xidian.FindBeacons.NearestRefPoint;
 
 /**
  * 指纹定位与rssi距离定位比较
@@ -52,6 +53,10 @@ public class locationActivity extends Activity {
 		    fingerprint(beacons);
 		    /** 根据rssi距离模型定位  */
 		    rssi_distance(beacons);
+		    /** 根据rssi距离模型定位,使用类NearestBeacon,效果应与rssi_distance()一致 */
+		    //rssi_distance1(beacons);
+		    /** 根据rssi距离模型定位,使用类NearestBeacon, 停留时间3000s以上，距离3m以内 */
+		    rssi_distance2(beacons);
 		}
     	
     }; 
@@ -127,6 +132,41 @@ public class locationActivity extends Activity {
 		LogManager.d(TAG, str);
 	    logToDisplay(str);
     }
+    
+    /** 距离最近的beacon, 参数用于展品定位，停留时间3000ms以上，距离3m以内*/
+    NearestBeacon nearestBeacon = new NearestBeacon(3,3000);
+    /** 根据rssi距离模型定位,使用类NearestBeacon,效果应与rssi_distance()一致 */
+    private void rssi_distance1(Collection<Beacon> beacons)
+    {
+    	Beacon beacon = nearestBeacon.getNearestBeacon(NearestBeacon.GET_LOCATION_BEACON, beacons);
+    	String str,min_Ids;
+    	double min_distance;
+    	if (beacon!=null) { 
+    		min_distance = beacon.getDistance();
+    		min_Ids = beacon.getId2()+"_"+beacon.getId3();
+    	    str = "最近beacon："+min_Ids+","+String.format("%.2f",min_distance);
+    	}
+    	else str = "未发现距离最近的beacon";
+		LogManager.d(TAG, str);
+	    logToDisplay(str);
+    }
+    
+    /** 展品定位，根据rssi距离模型定位,使用类NearestBeacon, 停留时间3000ms以上，距离3m以内 */
+    private void rssi_distance2(Collection<Beacon> beacons)
+    {
+    	Beacon beacon = nearestBeacon.getNearestBeacon(NearestBeacon.GET_EXHIBIT_BEACON, beacons);
+    	String str,min_Ids;
+    	double min_distance;
+    	if (beacon!=null) { 
+    		min_distance = beacon.getDistance();
+    		min_Ids = beacon.getId2()+"_"+beacon.getId3();
+    	    str = "展品beacon："+min_Ids+","+String.format("%.2f",min_distance);
+    	}
+    	else str = "未发现展品beacon";
+		LogManager.d(TAG, str);
+	    logToDisplay(str);
+    }
+    
        
     private static LogcatHelper loghelper;  //日志文件
     private Button start_logfile; // 开始记录日志文件
