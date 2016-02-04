@@ -370,11 +370,23 @@ public class locationActivity extends Activity {
         FindBeacons.setSampleExpirationMilliseconds(SamplePeroid);   
     }
     
+    // 测试
+	NearestRefPoint nRP = new NearestRefPoint(2000);
+	static int num=0;
     /** 写标记到日志 */
     public void onMark(View view) {
     	String str = "***" + mark_edit.getText().toString() + "***";
     	LogManager.d(TAG, str);
     	logToDisplay(str);
+    	
+    	num++;
+    	String RPname="RP"+num;
+    	nRP.addRefPoint(RPname);
+    	nRP.addRefPoint("RP0");
+    	
+    	logToDisplay("11"+nRP.RefPoints());
+    	logToDisplay("nRP="+nRP.getNearestRefPoint());
+    	logToDisplay("22"+nRP.RefPoints());
     }
      
     public void logToDisplay(final String line) {
