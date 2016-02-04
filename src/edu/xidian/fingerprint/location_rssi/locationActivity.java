@@ -22,11 +22,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import edu.xidian.FindBeacons.FindBeacons;
 import edu.xidian.FindBeacons.FindBeacons.OnBeaconsListener;
+import edu.xidian.FindBeacons.NearestRefPoint;
 import edu.xidian.FindBeacons.RssiDbManager;
 import edu.xidian.FindBeacons.RssiInfo;
 import edu.xidian.NearestBeacon.NearestBeacon;
 import edu.xidian.logtofile.LogcatHelper;
-import edu.xidian.FindBeacons.NearestRefPoint;
 
 /**
  * 指纹定位与rssi距离定位比较
@@ -50,15 +50,21 @@ public class locationActivity extends Activity {
 			if(beacons.size() == 0) return;
 			
 			/** 根据指纹定位算法定位  */
-		    fingerprint(beacons);
+		    //fingerprint(beacons);
+		    
 		    /** 根据rssi距离模型定位  */
 		    rssi_distance(beacons);
+		    
 		    /** 根据rssi距离模型定位,使用类NearestBeacon,效果应与rssi_distance()一致 */
-		    //rssi_distance1(beacons);
-		    /** 根据rssi距离模型定位,使用类NearestBeacon, 停留时间3000s以上，距离3m以内 */
+		    // rssi_distance1(beacons);
+		    
+		    /** 展品定位，根据rssi距离模型定位,使用类NearestBeacon, 停留时间3000s以上，距离3m以内 */
 		    rssi_distance2(beacons);
+		    
+		    /** 展品定位，获取停留时间内，次数最多的定位参考点 */
+		    fingerprint_nearestRefPoint(beacons);  
 		}
-    	
+		
     }; 
     
     /** 根据指纹定位算法定位  */
@@ -133,11 +139,11 @@ public class locationActivity extends Activity {
 	    logToDisplay(str);
     }
     
-    /** 距离最近的beacon, 参数用于展品定位，停留时间3000ms以上，距离3m以内*/
-    NearestBeacon nearestBeacon = new NearestBeacon(3,3000);
+    /** 距离最近的beacon */
+    NearestBeacon nearestBeacon = new NearestBeacon();
     /** 根据rssi距离模型定位,使用类NearestBeacon,效果应与rssi_distance()一致 */
     private void rssi_distance1(Collection<Beacon> beacons)
-    {
+    {      
     	Beacon beacon = nearestBeacon.getNearestBeacon(NearestBeacon.GET_LOCATION_BEACON, beacons);
     	String str,min_Ids;
     	double min_distance;
@@ -151,9 +157,13 @@ public class locationActivity extends Activity {
 	    logToDisplay(str);
     }
     
-    /** 展品定位，根据rssi距离模型定位,使用类NearestBeacon, 停留时间3000ms以上，距离3m以内 */
+    /** 展品定位，根据rssi距离模型定位,使用类NearestBeacon, 停留设定的停留时间以上，距离3m以内 */
     private void rssi_distance2(Collection<Beacon> beacons)
     {
+    	String StayTime_str = StayTime_edit.getText().toString();
+        long StayTime = (long)(Double.parseDouble(StayTime_str) * 1000.0D);
+        nearestBeacon.setMin_stay_milliseconds(StayTime);
+        
     	Beacon beacon = nearestBeacon.getNearestBeacon(NearestBeacon.GET_EXHIBIT_BEACON, beacons);
     	String str,min_Ids;
     	double min_distance;
@@ -167,6 +177,26 @@ public class locationActivity extends Activity {
 	    logToDisplay(str);
     }
     
+    /**
+     *  展品定位，找出停留时间内，次数最多的最近参考点，次数>=2
+     */
+    NearestRefPoint nearestRefPoint = new NearestRefPoint();
+    private void fingerprint_nearestRefPoint(Collection<Beacon> beacons)
+    {
+    	String StayTime_str = StayTime_edit.getText().toString();
+        long StayTime = (long)(Double.parseDouble(StayTime_str) * 1000.0D);
+        nearestRefPoint.setMin_stay_milliseconds(StayTime);
+        
+    	String str;
+    	// 本次扫描周期结束，获得的最近定位参考点
+		String RPname = nearestRefPoint.getNearestRefPoint(beacons, mRssiInfo);
+		// 停留时间内，次数最多的最近参考点
+		String RPname1 = nearestRefPoint.getNearestRefPoint();
+		
+		str = "本次参考点:"+ RPname + ",停留时间内:" + RPname1;
+		LogManager.d(TAG, str);
+	    logToDisplay(str);
+    }
        
     private static LogcatHelper loghelper;  //日志文件
     private Button start_logfile; // 开始记录日志文件
@@ -180,6 +210,11 @@ public class locationActivity extends Activity {
     
     /** rssi采样周期,即，计算该时间段内的平均RSSI（首末各去掉10%）,缺省是20秒(20000毫秒) */
     private EditText SamplePeriod_edit; // s
+    
+    /** 停留时间，即统计此段时间内，最近参考点的次数最多者，即为最近参考点，次数>=2 
+     * 默认5秒(5000毫秒)
+     */
+    private EditText StayTime_edit; // s
         
     /** 数据库管理 */
     private RssiDbManager mRssiDbManager;
@@ -263,6 +298,12 @@ public class locationActivity extends Activity {
         SamplePeriod_edit = (EditText)findViewById(R.id.SamplePeriod_edit);
         SamplePeriod_edit.setText("10");  // 10s
         onSamplePeriod(null);
+        
+        /** 停留时间，即统计此段时间内，最近参考点的次数最多者，即为最近参考点，次数>=2 
+         * 默认5秒(5000毫秒)
+         */
+        StayTime_edit = (EditText)findViewById(R.id.stayTime_edit);
+        StayTime_edit.setText("5");
         
         /** 写标记到日志 */
         mark_edit = (EditText)findViewById(R.id.Mark_edt);
@@ -370,23 +411,11 @@ public class locationActivity extends Activity {
         FindBeacons.setSampleExpirationMilliseconds(SamplePeroid);   
     }
     
-    // 测试
-	NearestRefPoint nRP = new NearestRefPoint(2000);
-	static int num=0;
     /** 写标记到日志 */
     public void onMark(View view) {
     	String str = "***" + mark_edit.getText().toString() + "***";
     	LogManager.d(TAG, str);
     	logToDisplay(str);
-    	
-    	num++;
-    	String RPname="RP"+num;
-    	nRP.addRefPoint(RPname);
-    	nRP.addRefPoint("RP0");
-    	
-    	logToDisplay("11"+nRP.RefPoints());
-    	logToDisplay("nRP="+nRP.getNearestRefPoint());
-    	logToDisplay("22"+nRP.RefPoints());
     }
      
     public void logToDisplay(final String line) {

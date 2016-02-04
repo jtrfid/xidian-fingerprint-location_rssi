@@ -134,6 +134,27 @@
         android:layout_toRightOf="@+id/SamplePeriod_edit"
         android:enabled="false"
         android:text="采样周期(s)" />
+    
+     <!-- 停留时间，统计此段时间在参考点的次数  -->
+     <EditText
+        android:id="@+id/stayTime_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/Mstart"
+        android:layout_alignRight="@id/Mstop"
+        android:layout_below="@id/SamplePeriod_edit"
+        android:ems="10"
+        android:hint="停留时间(s)"
+        android:inputType="numberDecimal" />
+
+    <!-- 停留时间  -->
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/stayTime_edit"
+        android:layout_toRightOf="@+id/stayTime_edit"
+        android:enabled="false"
+        android:text="停留时间(s)" />
        
     <!-- 提示信息 -->   
     <ScrollView
@@ -143,7 +164,7 @@
         android:scrollbars="vertical"
         android:fadeScrollbars="true"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/SamplePeriod_edit" > 
+        android:layout_below="@+id/stayTime_edit" > 
         <TextView
 	        android:id="@+id/monitoringText"
 	        android:layout_width="match_parent"
